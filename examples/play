@@ -27,25 +27,22 @@ WIDTH = 512
 HEIGHT = 512
 
 
-class PlayCallback(sobek.Callback):
-    def __init__(self):
-        sobek.Callback.__init__(self)
-
-        self._mixer = None
-        self._scale = None
-
-    # This is called once to setup our start, end, and scale values.
+# This callback will position any Image object in the center of the
+# window and rotate it along the Z axis.
+class Spin(sobek.Callback):
     def init(self, node, state):
-        self._mixer = sobek.tween.Mixer(
-            quat(), quat(math.radians(359.99), vec3(0, 0, 1), 10.0)
+        self.mixer = sobek.tween.Mixer(
+            quat(math.radians(0.0), vec3(0.0, 0.0, 1.0)),
+            quat(math.radians(359.0), vec3(0.0, 0.0, 1.0)),
+            5.0,
+            mixer=quat.mix
         )
-        self._scale = 1.0
-
 
     def call(self, node, state):
-        pass
-        #node.matrix = self._scale * \
-        #    mat4.translate(self._mixer.update(state.time))
+        t = mat4.translate(-node[0].width // 2, -node[0].height // 2, 0.0)
+        r = self.mixer.update(state.time).to_mat4() * t
+
+        node.matrix = mat4.translate(WIDTH // 2, HEIGHT // 2, 0) * r
 
 
 
@@ -77,7 +74,7 @@ if __name__ == "__main__":
 
     transform.matrix = mat4.translate(0.0, 0.0, -1.0)
 
-    transform.callbacks.append(PlayCallback())
+    transform.callbacks.append(Spin())
 
     scene.append(transform)
 
