@@ -4,6 +4,7 @@ import sys
 
 sys.path.extend((".", ".."))
 
+import noise
 import sobek
 import sobek.buffer
 import sobek.drawable
@@ -45,6 +46,8 @@ from random import random
 def _rect(x, y, width, height, scale=1.0):
     width = width * scale
     height = height * scale
+    
+    # Rectangle made up of two quads.
     return (
         x, y,
         x + width, y,
@@ -66,10 +69,11 @@ class QuadGrid(sobek.Drawable):
             for col in range(cols):
                 x = col * (width + spacing)
 
-                r = random() * 0.2
-                # Add the two triangles that make up the quad.
+                n = noise.pnoise2(float(row / rows) , float(col / cols), 2)
+
+                # Add the quad using two triangles
                 self._buffer.data.extend(
-                    _rect(x, y, width, height, 1.0 + r)
+                    _rect(x, y, width, height, 1.0 + n)
                 )
 
         self._buffer.vertex_attributes = {
