@@ -72,7 +72,7 @@ class QuadGrid(sobek.Drawable):
                     n = noise.pnoise2(
                         start_y + ((float(row) / float(node.rows)) * 2.0),
                         start_x + ((float(col) / float(node.cols)) * 2.0),
-                        2
+                        1
                     )
 
                     node.scale(col, row, n + 0.5)
