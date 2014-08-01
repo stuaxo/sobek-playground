@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+
+import math
+import sys
+
+sys.path.extend((".", ".."))
+
+import sobek
+import windowing
+import sys
+
+from sobek.glm import vec4, mat4
+
+WIDTH = 512
+HEIGHT = 512
+
+
+# We derive from sobek.Image, since it provides a lot of the functionality
+# we already need.
+class AnimatedImage(sobek.Image):
+    # Although this isn't necessary to have as a class-within-a-class, it
+    # can sometimes be convenient for one-off examples like this.
+    class Update(sobek.Callback):
+        # Call this callback 10 times per second.
+        TIMEOUT = 1.0 / 10.0
+
+        def init(self, node, state):
+            self._mixer = sobek.tween.Mixer(0.5, 1.5, 3.0)
+
+        # The only thing this callback actually does it set the arc_size
+        # attribute of the node to which it is attached to some value
+        # determined by the mixer.
+        def call(self, node, state):
+            node.arc_size = 1000.0 * self._mixer.update(state.time)
+            node.redraw = True
+
+    # There isn't any builtin way to avoid having to override __init__
+    # quite yet. Users can develop their own methods, but I'm not sure
+    # Sobek itself should attempt to do anything with it.
+    def __init__(self, *args, **kwargs):
+        sobek.Image.__init__(self, *args, **kwargs)
+
+        self.arc_size = 0.0
+
+        self.callbacks.append(self.Update())
+
+    # This special sobek.Widget method is called every time the
+    # "redraw" attribute is set to true. It passes in a Cairo context
+    # to a surface whose format matches the associated Texture format.
+    #
+    # We use this API/paradigm/style/whatever because of the fact that
+    # callbacks cannot (and should not) do any drawing themselves; they can
+    # kickoff redraws, of course, but the actual texture manipulation needs
+    # to be kept controlled and predictable, since texture upload/subload is
+    # often a huge bottleneck.
+    #
+    # Again, keep in mind that this routine was called BECAUSE someone,
+    # somewhere, called:
+    #
+    #   image.redraw = True
+    #
+    # Specifically, in our case, the Update callback.
+    def draw_widget(self, cr, state):
+        # Call the base sobek.Image draw_image; you could, for example.
+        # choose to set the Cairo matrix before calling this.
+        self.draw_image(cr)
+
+        # Finally, do our custom drawing.
+        cr.translate(self.texture.width // 2, self.texture.height // 2)
+        cr.set_source_rgba(0.0, 0.3, 0.5, 0.5)
+        cr.arc(0.0, 0.0, self.arc_size, 0.0, 2.0 * math.pi)
+        cr.fill()
+
+
+if __name__ == "__main__":
+    image_file = "penguins.jpg"
+
+    window = windowing.create_window(
+        WIDTH,
+        HEIGHT,
+        fullscreen=False,
+        title="sobek-playground"
+    )
+
+    assets = sobek.Assets((
+        "assets",
+        "assets/shaders",
+        "../assets",
+        "../assets/shaders"
+    ))
+
+    scene = sobek.Scene()
+    transform = sobek.Transform()
+    image = AnimatedImage(assets.load(image_file).surface)
+
+    transform.append(image)
+
+    transform.matrix = mat4.translate(0.0, 0.0, -1.0) * \
+        mat4.scale(0.2, 0.2, 0.2)
+
+    scene.append(transform)
+
+    scene.attributes.append(sobek.Blend())
+    scene.attributes.append(assets.load("textured-cairo-quad.glsl"))
+
+    scene.matrix = mat4.ortho(0.0, WIDTH, 0.0, HEIGHT, 0.0, 1.0)
+    scene.viewport = vec4(0.0, 0.0, WIDTH, HEIGHT)
+    scene.clear_color = vec4(0.4, 0.4, 0.4, 1.0)
+
+    fps = window.main_loop(scene, sobek.RenderTraversal())
+
+    print("FPS:", fps)

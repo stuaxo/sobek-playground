@@ -1,17 +1,5 @@
 #!/usr/bin/env python3
 
-# This is a minimal, commentless example showing how to load an
-# image. This is about as small an example as you can get with
-# Sobek. Any library with the flexibility that Sobek provides will
-# always have some setup involed, and I refuse to ever have any
-# wrapper functions like:
-#
-#   w = super_window_function()
-#   w.show_my_image()
-#
-# Those kinds of examples and wrapper routines are so far-removed from
-# how software is actually used that they are entirely useless.
-
 import math
 import sys
 
@@ -45,18 +33,18 @@ class Spin(sobek.Callback):
         node.matrix = mat4.translate(WIDTH // 2, HEIGHT // 2, 0) * r
 
 
-
 if __name__ == "__main__":
     if len(sys.argv) >= 2:
         image_file = sys.argv[-1]
+
     else:
-        image_file = 'penguins.jpg'
+        image_file = "penguins.jpg"
 
     window = windowing.create_window(
         WIDTH,
         HEIGHT,
         fullscreen=False,
-        title="Sobek Minimal Image Viewer"
+        title="sobek-playground"
     )
 
     assets = sobek.Assets((
