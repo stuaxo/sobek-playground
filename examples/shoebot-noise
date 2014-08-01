@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+
+import sys
+
+sys.path.extend((".", ".."))
+
+import sobek
+import sobek.buffer
+import sobek.drawable
+import windowing
+
+from sobek.glm import vec4, mat4
+
+WIDTH = 500
+HEIGHT = 500
+
+
+VERT_SHADER = """
+attribute vec2 vertex;
+
+uniform mat4 sobek_ModelMatrix;
+uniform mat4 sobek_ProjectionMatrix;
+
+void main() {
+    gl_Position = sobek_ProjectionMatrix * sobek_ModelMatrix * vec4(
+        vertex.x,
+        vertex.y,
+        1.0,
+        1.0
+    );
+}
+"""
+
+FRAG_SHADER = """
+uniform vec4 color;
+
+void main() {
+    gl_FragColor = color;
+}
+"""
+
+
+class QuadGrid(sobek.Drawable):
+    def __init__(self, rows, cols, width, height, spacing, name=None):
+        sobek.Drawable.__init__(self, name)
+
+        self._buffer = sobek.Buffer()
+
+        for row in range(rows):
+            y = row * (height + spacing)
+
+            for col in range(cols):
+                x = col * (width + spacing)
+
+                # Add the two triangles that make up the quad.
+                self._buffer.data.extend((
+                    x, y,
+                    x + width, y,
+                    x + width, y + height,
+                    x + width, y + height,
+                    x, y,
+                    x, y + height
+                ))
+
+        self._buffer.vertex_attributes = {
+            "vertex": sobek.buffer.VertexAttribute(2, 0, 0)
+        }
+
+        self.arrays["quads"] = sobek.drawable.DrawArrays(
+            sobek.gles2.GL_TRIANGLES,
+            0,
+            6 * rows * cols
+        )
+
+        self.attributes.append(self._buffer)
+
+
+if __name__ == "__main__":
+    window = windowing.create_window(
+        WIDTH,
+        HEIGHT,
+        fullscreen=False,
+        title="sobek-playground"
+    )
+
+    assets = sobek.Assets((
+        "assets",
+        "assets/shaders",
+        "../assets",
+        "../assets/shaders"
+    ))
+
+    scene = sobek.Scene()
+    transform = sobek.Transform()
+
+    transform.append(QuadGrid(8, 8, 50, 50, 10))
+
+    transform.matrix = mat4.translate(15.0, 15.0, -1.0)
+
+    scene.append(transform)
+
+    # Manually setup of a Program Attribute.
+    program = sobek.Program()
+
+    program.shaders["foo"] = sobek.Shader(sobek.Shader.VERTEX, VERT_SHADER)
+    program.shaders["bar"] = sobek.Shader(sobek.Shader.FRAGMENT, FRAG_SHADER)
+
+    scene.attributes.append(sobek.Blend())
+    scene.attributes.append(sobek.Uniform("color", vec4(1.0, 1.0, 0.0, 1.0)))
+    scene.attributes.append(program)
+
+    scene.matrix = mat4.ortho(0.0, WIDTH, 0.0, HEIGHT, 0.0, 1.0)
+    scene.viewport = vec4(0.0, 0.0, WIDTH, HEIGHT)
+    scene.clear_color = vec4(0.4, 0.4, 0.4, 1.0)
+
+    fps = window.main_loop(scene, sobek.RenderTraversal())
+
+    print("FPS:", fps)
