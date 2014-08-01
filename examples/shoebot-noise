@@ -9,7 +9,7 @@ import sobek.buffer
 import sobek.drawable
 import windowing
 
-from sobek.glm import vec4, mat4
+from sobek.glm import vec2, vec2array, vec4, mat4
 
 WIDTH = 500
 HEIGHT = 500
@@ -42,39 +42,52 @@ void main() {
 from random import random
 
 
-def _rect(x, y, width, height, scale=1.0):
+def make_rect(x, y, width, height, scale=1.0):
     width = width * scale
     height = height * scale
+
     return (
-        x, y,
-        x + width, y,
-        x + width, y + height,
-        x + width, y + height,
-        x, y,
-        x, y + height
+        vec2(x, y),
+        vec2(x + width, y),
+        vec2(x + width, y + height),
+        vec2(x + width, y + height),
+        vec2(x, y),
+        vec2(x, y + height)
     )
+
 
 class QuadGrid(sobek.Drawable):
     def __init__(self, rows, cols, width, height, spacing, name=None):
         sobek.Drawable.__init__(self, name)
 
-        self._buffer = sobek.Buffer()
+        # Setup our Buffer attribute and use a vec2array (a super-fast,
+        # extremely easy-to-use specialized array) for the VBO data.
+        v2a = vec2array()
+
+        self._width = width
+        self._height = height
+        self._rows = rows
+        self._cols = cols
 
         for row in range(rows):
             y = row * (height + spacing)
 
             for col in range(cols):
                 x = col * (width + spacing)
+                r = 0.0  # random() * 0.2
 
-                r = random() * 0.2
                 # Add the two triangles that make up the quad.
-                self._buffer.data.extend(
-                    _rect(x, y, width, height, 1.0 + r)
-                )
+                v2a.extend(make_rect(
+                    x,
+                    y,
+                    width,
+                    height,
+                    1.0 + r
+                ))
 
-        self._buffer.vertex_attributes = {
+        self._buffer = sobek.Buffer(v2a, vertex_attributes={
             "vertex": sobek.buffer.VertexAttribute(2, 0, 0)
-        }
+        })
 
         self.arrays["quads"] = sobek.drawable.DrawArrays(
             sobek.gles2.GL_TRIANGLES,
@@ -84,6 +97,22 @@ class QuadGrid(sobek.Drawable):
 
         self.attributes.append(self._buffer)
 
+    # Scales the quad at location X, Y by the value specified by scale.
+    def scale(self, x, y, scale):
+        offset = (y * self._cols * 6) + (x * 6)
+        scale_mat = mat4.scale(scale, scale, scale)
+        trans_mat = mat4.translate(-self._width // 2, -self._height // 2, 0.0)
+
+        v0 = vec4(self._buffer.data[offset])
+
+        for i in range(6):
+            v = vec4(self._buffer.data[offset + i])
+
+            v = trans_mat * v
+            v = scale_mat * v
+            v = mat4.translate(v0.x, v0.y, 0.0) * v
+
+            self._buffer.data[offset + i] = vec2(v.x, v.y)
 
 if __name__ == "__main__":
     window = windowing.create_window(
@@ -104,6 +133,12 @@ if __name__ == "__main__":
     transform = sobek.Transform()
 
     transform.append(QuadGrid(8, 8, 50, 50, 10))
+
+    # TODO: Testing
+    transform[-1].scale(0, 0, 0.2)
+    transform[-1].scale(1, 1, 0.2)
+    transform[-1].scale(2, 2, 0.2)
+    # TODO: Testing
 
     transform.matrix = mat4.translate(15.0, 15.0, -1.0)
 
