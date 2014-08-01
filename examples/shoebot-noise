@@ -62,7 +62,7 @@ def make_quad(x, y, width, height, scale=1.0):
 
 class QuadGrid(sobek.Drawable):
     class Update(sobek.Callback):
-        TIMEOUT = 1.0 / 30.0
+        TIMEOUT = 1.0 / 60.0
 
         def call(self, node, state):
             start_x = math.sin(state.time * 0.5)
@@ -70,12 +70,12 @@ class QuadGrid(sobek.Drawable):
             for row in range(node.rows):
                 for col in range(node.cols):
                     n = noise.pnoise2(
-                        start_y + (float(row) / float(node.rows) * 2.0),
-                        start_x + (float(col) / float(node.cols) * 2.0),
+                        start_y + ((float(row) / float(node.rows)) * 2.0),
+                        start_x + ((float(col) / float(node.cols)) * 2.0),
                         2
                     )
 
-                    node.scale(col, row, n)
+                    node.scale(col, row, n + 0.5)
 
             node.attributes[-1].subload = True
 
@@ -131,7 +131,7 @@ class QuadGrid(sobek.Drawable):
 
         # TODO: The vec2array object needs to support SLICE ASSIGNMENT!
         # TODO: JEREMY FIX THIS!
-        offset = (y * self.cols * 6) + (x * 6)
+        offset = (y * float(self.cols) * 6.0) + (x * 6.0)
 
         for i in range(6):
             self._buffer.data[offset + i] = quad[i]
