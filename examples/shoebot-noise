@@ -39,6 +39,20 @@ void main() {
 }
 """
 
+from random import random
+
+
+def _rect(x, y, width, height, scale=1.0):
+    width = width * scale
+    height = height * scale
+    return (
+        x, y,
+        x + width, y,
+        x + width, y + height,
+        x + width, y + height,
+        x, y,
+        x, y + height
+    )
 
 class QuadGrid(sobek.Drawable):
     def __init__(self, rows, cols, width, height, spacing, name=None):
@@ -52,15 +66,11 @@ class QuadGrid(sobek.Drawable):
             for col in range(cols):
                 x = col * (width + spacing)
 
+                r = random() * 0.2
                 # Add the two triangles that make up the quad.
-                self._buffer.data.extend((
-                    x, y,
-                    x + width, y,
-                    x + width, y + height,
-                    x + width, y + height,
-                    x, y,
-                    x, y + height
-                ))
+                self._buffer.data.extend(
+                    _rect(x, y, width, height, 1.0 + r)
+                )
 
         self._buffer.vertex_attributes = {
             "vertex": sobek.buffer.VertexAttribute(2, 0, 0)
