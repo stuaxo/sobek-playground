@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+
+import sobek.cairo as cairo
+import misc.imgurapi as imgurapi
+
+import urllib.request
+import sys
+import os
+import math
+import operator
+
+TMP_DIR = "tmp"
+NUM_SYNC = 20
+
+
+class Gallery(imgurapi.Gallery):
+    def __init__(self, page=0):
+        imgurapi.Gallery.__init__(self)
+
+        self.load(page)
+
+    def sync(self):
+        for image in self.images[:NUM_SYNC]:
+            url = image["link"]
+            url_file = os.path.join(TMP_DIR, url[url.rfind("/") + 1:])
+
+            if os.path.exists(url_file):
+                print("Skipping downloaded image: %s" % url_file)
+
+                continue
+
+            with open(url_file, "bw") as f, urllib.request.urlopen(url) as res:
+                sys.stdout.write("Writing image %s... " % url)
+                sys.stdout.flush()
+
+                f.write(res.read())
+
+            sys.stdout.write("done.\n")
+            sys.stdout.flush()
+
+    def create_outline(self, surface_size):
+        total = 0.0
+
+        for image in self.images[:NUM_SYNC]:
+            image["aspect_ratio"] = image["width"] / image["height"]
+
+            total += image["aspect_ratio"]
+
+        images = sorted(
+            self.images[:NUM_SYNC],
+            key=operator.itemgetter("aspect_ratio")
+        )
+
+        size = math.sqrt(total)
+
+        surface = cairo.ImageSurface(
+            cairo.FORMAT_ARGB32,
+            surface_size,
+            surface_size
+        )
+
+        cr = cairo.Context(surface)
+
+        x = 0.0
+        y = 0.0
+
+        cr.set_source_rgba(1.0, 0.0, 0.0, 1.0)
+        cr.paint()
+        cr.set_source_rgba(1.0, 1.0, 1.0, 0.5)
+        cr.scale(surface_size / size, surface_size / size)
+
+        x = 0.0
+        y = 0.0
+        p = cr.device_to_user(4.0, 4.0)[0]
+
+        for image in images[:NUM_SYNC]:
+            ar = image["aspect_ratio"]
+
+            if x + ar < size:
+                cr.rectangle(x + p, y + p, ar - (p * 2.0), 1.0 - (p * 2.0))
+                cr.fill()
+
+                x += ar
+
+            else:
+                x = 0.0
+                y += 1.0
+
+        surface.write_to_png("gallery.png")
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Specify your CLIENT_ID key!")
+
+        sys.exit(1)
+
+    # Set the CLIENT_ID; ugh.
+    imgurapi.CLIENT_ID = sys.argv[1]
+
+    if not os.path.isdir(TMP_DIR):
+        os.mkdir(TMP_DIR)
+
+    gallery = Gallery()
+
+    gallery.sync()
+    gallery.create_outline(1600)
