@@ -4,17 +4,18 @@ import sys
 
 sys.path.extend((".", ".."))
 
-# import noise
 import sobek
 import sobek.buffer
 import sobek.drawable
 import windowing
+import noise
+import random
 
 from sobek.glm import vec2, vec2array, vec4, mat4
 
+
 WIDTH = 500
 HEIGHT = 500
-
 
 VERT_SHADER = """
 attribute vec2 vertex;
@@ -40,24 +41,38 @@ void main() {
 }
 """
 
-from random import random
 
+def make_quad(x, y, width, height, scale=1.0):
+    origin = vec2(x + (width // 2), y + (height // 2))
+    w2 = (width / 2) * scale
+    h2 = (height / 2) * scale
 
-def make_rect(x, y, width, height, scale=1.0):
-    width = width * scale
-    height = height * scale
-
-    return (
-        vec2(x, y),
-        vec2(x + width, y),
-        vec2(x + width, y + height),
-        vec2(x + width, y + height),
-        vec2(x, y),
-        vec2(x, y + height)
+    verts = (
+        origin + vec2(-w2, -h2),
+        origin + vec2(w2, -h2),
+        origin + vec2(w2, h2),
+        origin + vec2(w2, h2),
+        origin + vec2(-w2, -h2),
+        origin + vec2(-w2, h2)
     )
+
+    return verts
 
 
 class QuadGrid(sobek.Drawable):
+    class Update(sobek.Callback):
+        TIMEOUT = 1.0 / 30.0
+
+        def call(self, node, state):
+            for row in range(node.rows):
+                for col in range(node.cols):
+                    # n = noise.pnoise2(row / node.rows, col / node.cols, 2)
+                    n = random.random() % 1.0
+
+                    node.scale(col, row, n)
+
+            node.attributes[-1].subload = True
+
     def __init__(self, rows, cols, width, height, spacing, name=None):
         sobek.Drawable.__init__(self, name)
 
@@ -65,28 +80,25 @@ class QuadGrid(sobek.Drawable):
         # extremely easy-to-use specialized array) for the VBO data.
         v2a = vec2array()
 
-        self._width = width
-        self._height = height
-        self._rows = rows
-        self._cols = cols
+        self.width = width
+        self.height = height
+        self.rows = rows
+        self.cols = cols
+        self.spacing = spacing
 
         for row in range(rows):
             y = row * (height + spacing)
 
             for col in range(cols):
                 x = col * (width + spacing)
-                r = 0.0  # random() * 0.2
 
                 # Add the two triangles that make up the quad.
-                v2a.extend(make_rect(
+                v2a.extend(make_quad(
                     x,
                     y,
                     width,
-                    height,
-                    1.0 + r
+                    height
                 ))
-
-        # n = noise.pnoise2(float(row / rows) , float(col / cols), 2)
 
         self._buffer = sobek.Buffer(v2a, vertex_attributes={
             "vertex": sobek.buffer.VertexAttribute(2, 0, 0)
@@ -100,22 +112,24 @@ class QuadGrid(sobek.Drawable):
 
         self.attributes.append(self._buffer)
 
-    # Scales the quad at location X, Y by the value specified by scale.
-    def scale(self, x, y, scale):
-        offset = (y * self._cols * 6) + (x * 6)
-        scale_mat = mat4.scale(scale, scale, scale)
-        trans_mat = mat4.translate(-self._width // 2, -self._height // 2, 0.0)
+        self.callbacks.append(self.Update())
 
-        v0 = vec4(self._buffer.data[offset])
+    def scale(self, x, y, scale):
+        quad = make_quad(
+            x * (self.width + self.spacing),
+            y * (self.height + self.spacing),
+            self.width,
+            self.height,
+            scale
+        )
+
+        # TODO: The vec2array object needs to support SLICE ASSIGNMENT!
+        # TODO: JEREMY FIX THIS!
+        offset = (y * self.cols * 6) + (x * 6)
 
         for i in range(6):
-            v = vec4(self._buffer.data[offset + i])
+            self._buffer.data[offset + i] = quad[i]
 
-            v = trans_mat * v
-            v = scale_mat * v
-            v = mat4.translate(v0.x, v0.y, 0.0) * v
-
-            self._buffer.data[offset + i] = vec2(v.x, v.y)
 
 if __name__ == "__main__":
     window = windowing.create_window(
@@ -136,12 +150,6 @@ if __name__ == "__main__":
     transform = sobek.Transform()
 
     transform.append(QuadGrid(8, 8, 50, 50, 10))
-
-    # TODO: Testing
-    transform[-1].scale(0, 0, 0.2)
-    transform[-1].scale(1, 1, 0.2)
-    transform[-1].scale(2, 2, 0.2)
-    # TODO: Testing
 
     transform.matrix = mat4.translate(15.0, 15.0, -1.0)
 
