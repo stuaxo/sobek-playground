@@ -4,6 +4,7 @@ import sys
 
 sys.path.extend((".", ".."))
 
+# import noise
 import sobek
 import sobek.buffer
 import sobek.drawable
@@ -84,6 +85,8 @@ class QuadGrid(sobek.Drawable):
                     height,
                     1.0 + r
                 ))
+
+        # n = noise.pnoise2(float(row / rows) , float(col / cols), 2)
 
         self._buffer = sobek.Buffer(v2a, vertex_attributes={
             "vertex": sobek.buffer.VertexAttribute(2, 0, 0)
