@@ -17,9 +17,12 @@ class Update(sobek.Callback):
         self.seq = []
 
         for i, s in enumerate(range(4)):
-            seq = [0.0] * 5
+            seq = [0.0] * 8
 
             seq[i + 1] = 1.0
+
+            # Force all quads to be on screen at once.
+            seq[6] = 1.0
 
             self.seq.append(sobek.tween.Sequencer(seq, self.FADE_TIME))
 

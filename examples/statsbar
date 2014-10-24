@@ -11,8 +11,8 @@ from misc import statsbar
 from sobek.glm import vec4, mat4
 
 
-WIDTH = 1280
-HEIGHT = 800
+WIDTH = 1024
+HEIGHT = 100
 
 
 if __name__ == "__main__":

@@ -62,11 +62,11 @@ def make_quad(x, y, width, height, scale=1.0):
 
 class QuadGrid(sobek.Drawable):
     class Update(sobek.Callback):
-        TIMEOUT = 1.0 / 60.0
+        # TIMEOUT = 1.0 / 60.0
 
         def call(self, node, state):
-            start_x = math.sin(state.time * 0.5)
-            start_y = math.cos(state.time * 0.5)
+            start_x = math.sin(state.time * 1.5)
+            start_y = math.cos(state.time * 1.5)
             for row in range(node.rows):
                 for col in range(node.cols):
                     n = noise.pnoise2(
@@ -75,7 +75,7 @@ class QuadGrid(sobek.Drawable):
                         1
                     )
 
-                    node.scale(col, row, n + 0.5)
+                    node.scale(col, row, n + 0.25)
 
             node.attributes[-1].subload = True
 
