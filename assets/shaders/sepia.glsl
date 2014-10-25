@@ -1,3 +1,0 @@
-sepia.vert
-sepia.frag
-

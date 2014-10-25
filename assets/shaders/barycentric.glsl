@@ -1,2 +1,0 @@
-barycentric.vert
-barycentric.frag

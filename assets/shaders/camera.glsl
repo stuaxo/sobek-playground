@@ -1,2 +1,0 @@
-camera.vert
-camera.frag

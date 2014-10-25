@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
-import sys
-
-sys.path.extend(("tests", "examples"))
-
 import sobek
-import windowing
 
-from misc import statsbar
+from misc import (
+    statsbar,
+    common
+)
+
 from sobek.glm import vec4, mat4
 
 
@@ -16,21 +15,14 @@ HEIGHT = 100
 
 
 if __name__ == "__main__":
-    assets = sobek.Assets((
-        "assets",
-        "assets/shaders",
-        "../assets",
-        "../assets/shaders"
-    ))
-
-    window = windowing.create_window(WIDTH, HEIGHT, title="Statsbar")
+    window = sobek.window.create_window(WIDTH, HEIGHT, title="Statsbar")
     scene = sobek.Scene()
     transform = sobek.Transform()
 
     transform.append(statsbar.StatsBar())
     transform.attributes.append(sobek.Uniform("texture", 0))
     transform.attributes.append(sobek.Blend())
-    transform.attributes.append(assets.load("textured-cairo-quad.glsl"))
+    transform.attributes.append(common.assets.load("textured-cairo-quad.glsl"))
 
     scene.append(transform)
 

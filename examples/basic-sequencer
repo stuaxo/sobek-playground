@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
+import misc.common
 import sobek
-import windowing
 
 from sobek.glm import vec4, mat4
 
@@ -34,14 +34,14 @@ class Update(sobek.Callback):
 
 
 if __name__ == "__main__":
-    window = windowing.create_window(
+    window = sobek.window.create_window(
         WIDTH,
         HEIGHT,
         fullscreen=False,
         title="sobek-playground"
     )
 
-    assets = sobek.Assets(archives=["../assets/color-quad.zip"])
+    misc.common.assets.add_archive("../assets/color-quad.zip")
 
     scene = sobek.Scene()
     transform = sobek.Transform()
@@ -59,7 +59,7 @@ if __name__ == "__main__":
         transform.append(quad)
 
     transform.callbacks.append(Update())
-    transform.attributes.append(assets.load("color-quad.glsl"))
+    transform.attributes.append(misc.common.assets.load("color-quad.glsl"))
     transform.attributes.append(sobek.Blend(
         sobek.Blend.SRC_ALPHA,
         sobek.Blend.ONE_MINUS_SRC_ALPHA

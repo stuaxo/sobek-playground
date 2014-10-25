@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
 
-import math
-import sys
-
-sys.path.extend((".", ".."))
-
+import misc.common
 import sobek
-import windowing
-import sys
+import math
 
 from sobek.glm import vec4, mat4
 
@@ -75,23 +70,16 @@ class AnimatedImage(sobek.Image):
 if __name__ == "__main__":
     image_file = "penguins.jpg"
 
-    window = windowing.create_window(
+    window = sobek.window.create_window(
         WIDTH,
         HEIGHT,
         fullscreen=False,
         title="sobek-playground"
     )
 
-    assets = sobek.Assets((
-        "assets",
-        "assets/shaders",
-        "../assets",
-        "../assets/shaders"
-    ))
-
     scene = sobek.Scene()
     transform = sobek.Transform()
-    image = AnimatedImage(assets.load(image_file).surface)
+    image = AnimatedImage(misc.common.assets.load(image_file).surface)
 
     transform.append(image)
 
@@ -101,7 +89,9 @@ if __name__ == "__main__":
     scene.append(transform)
 
     scene.attributes.append(sobek.Blend())
-    scene.attributes.append(assets.load("textured-cairo-quad.glsl"))
+    scene.attributes.append(misc.common.assets.load(
+        "textured-cairo-quad.glsl"
+    ))
 
     scene.matrix = mat4.ortho(0.0, WIDTH, 0.0, HEIGHT, 0.0, 1.0)
     scene.viewport = vec4(0.0, 0.0, WIDTH, HEIGHT)

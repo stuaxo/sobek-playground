@@ -1,2 +1,0 @@
-noise.vert
-noise.frag

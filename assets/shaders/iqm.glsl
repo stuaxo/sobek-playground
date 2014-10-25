@@ -1,2 +1,0 @@
-iqm.vert
-iqm.frag

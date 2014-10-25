@@ -1,16 +1,10 @@
 #!/usr/bin/env python3
 
-import math
-import sys
-
-sys.path.extend((".", ".."))
-
 import sobek
 import sobek.buffer
 import sobek.drawable
-import windowing
 import noise
-import random
+import math
 
 from sobek.glm import vec2, vec2array, vec4, mat4
 
@@ -138,19 +132,12 @@ class QuadGrid(sobek.Drawable):
 
 
 if __name__ == "__main__":
-    window = windowing.create_window(
+    window = sobek.window.create_window(
         WIDTH,
         HEIGHT,
         fullscreen=False,
         title="sobek-playground"
     )
-
-    assets = sobek.Assets((
-        "assets",
-        "assets/shaders",
-        "../assets",
-        "../assets/shaders"
-    ))
 
     scene = sobek.Scene()
     transform = sobek.Transform()
